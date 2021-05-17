@@ -62,7 +62,7 @@ describe OpenTelemetry::Instrumentation::Sinatra do
   end
 
   before do
-    instrumentation.install
+    instrumentation.install(enable_parameter_obfuscation: false)
     exporter.reset
   end
 
@@ -134,6 +134,34 @@ describe OpenTelemetry::Instrumentation::Sinatra do
         'http.url' => '/missing_example/not_present',
         'http.status_code' => 404
       )
+    end
+
+    describe 'obfuscate parameters' do
+      before do
+        @config = instrumentation.config.dup
+      end
+
+      after do
+        instrumentation.config.replace(@config) if @config
+      end
+
+      it 'will obfuscate route parameters when config option is enabled' do
+        instrumentation.config[:enable_route_parameter_obfuscation] = true
+
+        get '/one//api/v1/foo/janedoe/'
+
+        _(exporter.finished_spans.size).must_equal 1
+        _(exporter.finished_spans.first.attributes).must_equal(
+          'http.method' => 'GET',
+          'http.url' => '/api/v1/foo/:myname/',
+          'http.status_code' => 200,
+          'http.route' => '/api/v1/foo/:myname/?'
+        )
+        _(exporter.finished_spans.map(&:name))
+          .must_equal [
+            'GET /api/v1/foo/:myname/?'
+          ]
+      end
     end
   end
 end

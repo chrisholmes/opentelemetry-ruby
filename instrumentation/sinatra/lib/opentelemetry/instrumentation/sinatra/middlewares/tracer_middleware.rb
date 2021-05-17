@@ -41,9 +41,25 @@ module OpenTelemetry
             status, _headers, _response_body = resp
 
             span.set_attribute('http.status_code', status)
-            span.set_attribute('http.route', env['sinatra.route'].split.last) if env['sinatra.route']
-            span.name = env['sinatra.route'] if env['sinatra.route']
+
+            if env['sinatra.route']
+              span.name = env['sinatra.route']
+
+              route = env['sinatra.route'].split.last
+              span.set_attribute('http.route', route)
+
+              if config[:enable_route_parameter_obfuscation] && span.attributes['http.url']
+                url = span.attributes['http.url']
+                url = URI.parse(url)
+                url.path = URI.parse(route).path
+                span.set_attribute('http.url', url.to_s)
+              end
+            end
             span.status = OpenTelemetry::Trace::Status.http_to_status(status)
+          end
+
+          def config
+            OpenTelemetry::Instrumentation::Sinatra::Instrumentation.instance.config
           end
         end
       end

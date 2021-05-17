@@ -16,6 +16,8 @@ module OpenTelemetry
           ::Sinatra::Base.register Extensions::TracerExtension
         end
 
+        option :enable_route_parameter_obfuscation, default: true, validate: :boolean
+
         present do
           defined?(::Sinatra)
         end
