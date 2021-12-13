@@ -17,7 +17,7 @@ describe OpenTelemetry::Instrumentation::RubyKafka::Patches::Producer do
   let(:host) { ENV.fetch('TEST_KAFKA_HOST') { '127.0.0.1' } }
   let(:port) { (ENV.fetch('TEST_KAFKA_PORT') { 29_092 }) }
 
-  let(:kafka) { Kafka.new(["#{host}:#{port}"], client_id: 'opentelemetry-kafka-test') }
+  let(:kafka) { Kafka.new(["#{host}:#{port}"], client_id: 'opentelemetry-kafka-test', connect_timeout: 30) }
   let(:topic) { "topic-#{SecureRandom.uuid}" }
   let(:async_topic) { "async-#{topic}" }
   let(:producer) { kafka.producer }
